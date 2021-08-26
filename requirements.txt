@@ -1,3 +1,5 @@
 jupyter_contrib_nbextensions
 termcolor
 pandas
+bs4
+sklearn
