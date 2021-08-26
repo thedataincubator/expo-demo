@@ -1,2 +1,3 @@
 jupyter_contrib_nbextensions
 termcolor
+pandas
