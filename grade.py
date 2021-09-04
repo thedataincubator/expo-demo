@@ -134,7 +134,10 @@ QUESTIONS = {
     },
     'digits': {
         'initialize': '',
-        'eval_func': check_function('sum_digits', ((283701,), 21))
+        'eval_func': check_function('sum_digits',
+                                    ((283701,), 21),
+                                    ((0,), 0),
+                                    ((999999999,), 81))
     },
     'salaries': {
         'initialize': '''salaries_dict = {"ID2435": {"name": "Jim Benz", "salary": 100000}, 
