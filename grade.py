@@ -6,6 +6,7 @@ from IPython.core.magic import register_cell_magic
 from IPython.display import display, HTML
 import pandas as pd
 
+
 def check_value(var, ans, show_ans=False):
     def func(ipy):
         try:
@@ -36,7 +37,44 @@ def check_value(var, ans, show_ans=False):
     
     return func
 
-def check_function(code, var, ans):
+def check_function(name, *test_cases):
+    def func(ipy):
+        try:
+            f = ipy.ev(name)
+        except NameError:
+            sys.stderr.write('No function named ' + colored(name, 'green') + ' found.\n')
+            sys.stderr.write('\n')
+            sys.stderr.write('Make sure your function is named correctly.\n')
+            return False
+        if not callable(f):
+            sys.stderr.write('The object named ' + colored(name, 'green') + ' is not a function.\n')
+            sys.stderr.write('\n')
+            sys.stderr.write('It is of type ' + colored(type(f), 'blue') + ', which is not callable.\n')
+            return False
+
+        for args, output in test_cases:
+            try:
+                val = f(*args)
+            except Exception:
+                sys.stderr.write(colored('Error calling your function.\n', 'red'))
+                sys.stderr.write('\n')
+                sys.stderr.write('When calling\n')
+                sys.stderr.write('        ' + colored(f'{name}({", ".join(map(repr, args))})', 'blue') + '\n')
+                sys.stderr.write('the following error was raised:\n')
+                raise
+
+            if val != output:
+                sys.stderr.write(colored("That doesn't look correct.\n", 'red'))
+                sys.stderr.write('\n')
+                sys.stderr.write('When calling\n')
+                sys.stderr.write('        ' + colored(f'{name}({", ".join(map(repr, args))})', 'blue') + '\n')
+                sys.stderr.write('an incorrect value was returned.\n')
+                return False
+
+        return True
+    return func
+
+def check_exec(code, var, ans):
     def func(ipy):
         ipy.ex(code)
         val = ipy.ev(var)
@@ -96,7 +134,7 @@ QUESTIONS = {
     },
     'digits': {
         'initialize': '',
-        'eval_func': check_function('val = sum_digits(283701)', 'val',  21)
+        'eval_func': check_function('sum_digits', ((283701,), 21))
     },
     'salaries': {
         'initialize': '''salaries_dict = {"ID2435": {"name": "Jim Benz", "salary": 100000}, 
@@ -107,13 +145,14 @@ QUESTIONS = {
     },
     'var_args': {
         'initialize': '',
-        'eval_func': check_function('''val = sum_numbers(2, 4, "hello", 1), \
-                                             sum_numbers(1, {'a':3}, 1), \
-                                             sum_numbers(3, [])''', 'val', (7, 2 ,3))
+        'eval_func': check_function('sum_numbers',
+                                    ((2, 4, 'hello', 1), 7),
+                                    ((1, {'a': 3}, 1), 2),
+                                    ((3, []), 3))
     },
     'classes': {
         'initialize': '',
-        'eval_func': check_function('''stu = Student("Jim",  "Brown", ["math", "sports"]) \nstu.change_last("Pitt") \nval = stu.num_topics()''', 'val', 2)
+        'eval_func': check_exec('''stu = Student("Jim",  "Brown", ["math", "sports"]) \nstu.change_last("Pitt") \nval = stu.num_topics()''', 'val', 2)
     },
     'most_common': {
         'initialize': '',
@@ -133,7 +172,7 @@ QUESTIONS = {
     },
     'decorator': {
         'initialize': '',
-        'eval_func': check_function('''@ensure_noneg \ndef some_formula(a, b, c):\n\tresult = 3*a + b - 8*c\n\treturn result \nval=some_formula(2, 3, 5), some_formula(5, 3, 2)''', 'val', (0, 2))
+        'eval_func': check_exec('''@ensure_noneg \ndef some_formula(a, b, c):\n\tresult = 3*a + b - 8*c\n\treturn result \nval=some_formula(2, 3, 5), some_formula(5, 3, 2)''', 'val', (0, 2))
     },
     'churn': {
         'initialize': '',
