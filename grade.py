@@ -139,7 +139,7 @@ QUESTIONS = {
     },
     'decorator': {
         'initialize': '',
-        'eval_func': check_function('''@ensure_noneg \ndef some_formula(a, b, c):\n\tresult = 3*a + b - 8*c\n\treturn result \nval=some_formula(2, 3, 5), some_formula(5, 3, 2)''', 'val', (0, 2))
+        'eval_func': check_function('''@ensure_nonneg \ndef some_formula(a, b, c):\n\tresult = 3*a + b - 8*c\n\treturn result \nval=some_formula(2, 3, 5), some_formula(5, 3, 2)''', 'val', (0, 2))
     },
     'churn': {
         'initialize': '',
