@@ -6,38 +6,32 @@ from IPython.core.magic import register_cell_magic
 from IPython.display import display, HTML
 import pandas as pd
 
-def check_value(var, ans):
+def check_value(var, ans, show_ans=False):
     def func(ipy):
         try:
             val = ipy.ev(var)
         except NameError:
-            sys.stderr.write(f"Something went wrong. Perhaps you did not name your result {var} as the grader expects?")
-            return
+            sys.stderr.write('No variable named ' + colored(var, 'green') + ' found.\n')
+            sys.stderr.write('\n')
+            sys.stderr.write('Make sure your variable is named correctly.')
+            return False
 
-        if val == ans:
+        if val == ans or (isinstance(val, float) and int(val) == ans):
             return True
+
         sys.stderr.write(colored("That doesn't look correct.\n", 'red'))
         sys.stderr.write('\n')
-        sys.stderr.write('We were expecting the the variable ' + colored(var, 'green') +
-                         ' to have the value\n')
-        sys.stderr.write('        ' + colored(ans, 'blue') + '\n')
-        sys.stderr.write('but it instead has the value\n')
-        sys.stderr.write('        ' + colored(val, 'blue') + '\n')
-        return False
-    
-    return func
-
-def check_solution(var, ans):
-    def func(ipy):
-        val = ipy.ev(var)
-        if val == ans:
-            return True
-        if isinstance(val, float):
-            if int(val)==ans:
-                return True
-        sys.stderr.write(colored("That doesn't look correct.\n", 'red'))
-        sys.stderr.write('\n')
-        sys.stderr.write('Fix your code and run the cell again.')
+        if show_ans:
+            sys.stderr.write('We were expecting the the variable ' + colored(var, 'green') +
+                             ' to have the value\n')
+            sys.stderr.write('        ' + colored(ans, 'blue') + '\n')
+            sys.stderr.write('but it instead has the value\n')
+            sys.stderr.write('        ' + colored(val, 'blue') + '\n')
+        else:
+            sys.stderr.write('The variable ' + colored(var, 'green') +
+                             ' has the value\n')
+            sys.stderr.write('        ' + colored(val, 'blue') + '\n')
+            sys.stderr.write('This is not what we expect.  Adjust your code and run the cell again.')
         return False
     
     return func
@@ -82,23 +76,23 @@ QUESTIONS = {
     },
     'append': {
         'initialize': 'my_list = [1,2,3,4]',
-        'eval_func': check_value('my_list', [1,2,3,4,33])
+        'eval_func': check_value('my_list', [1,2,3,4,33], True)
     },
     'appendmult': {
         'initialize': 'my_list = [1,2,3,4,33,4,5]',
-        'eval_func': check_value('my_list', [1,2,3,4,33,4,5,66,99])
+        'eval_func': check_value('my_list', [1,2,3,4,33,4,5,66,99], True)
     },
     'appendfor': {
         'initialize': 'some_list = [2, 3, 5, 7, 11]',
-        'eval_func': check_value('squared',  [4, 9, 25, 49, 121])
+        'eval_func': check_value('squared',  [4, 9, 25, 49, 121], True)
     },
     'modulo': {
         'initialize': 'numbers_list = [4,2,7,35,6,99,6,2,5,87,3,21]',
-        'eval_func': check_solution('new_list', [7, 35, 5, 21])
+        'eval_func': check_value('new_list', [7, 35, 5, 21])
     },
     'cubes': {
         'initialize': '',
-        'eval_func': check_solution('cubes', {3: 27, 5: 125, 7: 343, 9: 729, 11: 1331, 13: 2197, 15: 3375, 17: 4913, 19: 6859})
+        'eval_func': check_value('cubes', {3: 27, 5: 125, 7: 343, 9: 729, 11: 1331, 13: 2197, 15: 3375, 17: 4913, 19: 6859})
     },
     'digits': {
         'initialize': '',
@@ -109,7 +103,7 @@ QUESTIONS = {
                                           "ID9335": {"name": "Kim Pitt", "salary": 120000},
                                           "ID4535": {"name": "Jean Rolls", "salary": 80000},
                                           "ID4825": {"name": "Kathrine Frost", "salary": 160000}}''',
-        'eval_func': check_solution('max_salary_id', 'ID4825')
+        'eval_func': check_value('max_salary_id', 'ID4825')
     },
     'var_args': {
         'initialize': '',
@@ -123,19 +117,19 @@ QUESTIONS = {
     },
     'most_common': {
         'initialize': '',
-        'eval_func': check_solution('num_most_common', 5772)
+        'eval_func': check_value('num_most_common', 5772)
     },
     'fewest': {
         'initialize': '',
-        'eval_func': check_solution('agency_fewest', 'DOHMH')
+        'eval_func': check_value('agency_fewest', 'DOHMH')
     },
     'noise': {
         'initialize': '',
-        'eval_func': check_solution('agency_noise', 'NYPD')
+        'eval_func': check_value('agency_noise', 'NYPD')
     },
     'books': {
         'initialize': '',
-        'eval_func': check_solution('avg_book_price', 35)
+        'eval_func': check_value('avg_book_price', 35)
     },
     'decorator': {
         'initialize': '',
