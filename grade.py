@@ -192,8 +192,8 @@ def grade(line, cell):
         return
     
     ipy.ex(question['initialize'])
-    ipy.run_cell(cell)
-    if question['eval_func'](ipy):
+    result = ipy.run_cell(cell)
+    if result.success and question['eval_func'](ipy):
         grades[q] = True
         extra_message = ""
         if q=='digits' and sum(grades.values())>=7:
