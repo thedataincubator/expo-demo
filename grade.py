@@ -224,7 +224,11 @@ def get_grade_code():
     gb = grade_bits(grades.values(), 16)
     mixed = ''.join(i for t in zip(tb[:16], tb[16:], gb) for i in t)
     code = base64.b64encode(int(mixed, 2).to_bytes(6, 'big')).decode('ascii')
-    return f"Your code is: {code} \nYour final score is: {sum(grades.values())}"
+    display(HTML(f"""
+        <p>Your final score is {sum(grades.values())}/16.<br />
+           Your code is <tt>{code}</tt>.</p>
+        <p>Submit these to the <a href="#">leaderboard</a>.</p>
+    """))
 
 def parse_grade_code(code, n_questions):
     bits = f"{bin(int.from_bytes(base64.b64decode(code), 'big'))[2:]:0>48}"
