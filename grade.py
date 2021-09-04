@@ -151,21 +151,19 @@ grades = {k: False for k in QUESTIONS}
 grades['runcell'] = True
 
 def next_question(points, extra_message=""):
-    message_1 = """
-        <p><span class="ansi-blue-fg">Correct!</span> You now have a score of <span class="ansi-blue-fg">%i point%s!</span></p>
-    """ % (points, 's' if points != 1 else '')
-#     message_2 = """<p>You can now move on to the <button onclick=advance()>next question</button>.</p>
-#     <p>If you do not wish to continue and want to submit your score to the leaderboard, click <a href=#submission>HERE</a>.</p>"""
-    message_2 = """<p>You can now move on to the <button onclick=advance()>next question</button>.</p>
-     <p>If you do not wish to continue and want to submit your score to the leaderboard, click <button onclick=leaderboardfunc()>HERE</button>.</p>"""
-    return HTML(message_1 + extra_message + message_2)
+    return HTML(f"""
+        <p><span class="ansi-blue-fg">Correct!</span> You now have a score of <span class="ansi-blue-fg">{points} point{'s' if points != 1 else ''}!</span></p>
+        {extra_message}
+        <p>You can now move on to the <button onclick=advance()>next question</button>.</p>
+        <p>If you do not wish to continue and want to submit your score to the leaderboard, click <button onclick=leaderboardfunc()>HERE</button>.</p>
+    """)
 
 def last_question(points, extra_message=""):
-    message_1 = """
-        <p><span class="ansi-blue-fg">Correct!</span> You now have a score of <span class="ansi-blue-fg">%i point%s!</span></p>
-    """ % (points, 's' if points != 1 else '')
-    message_2 = """<p>Well done! If you want to submit your score to the leaderboard, click <a href=#submission>HERE</a>.</p>"""
-    return HTML(message_1 + extra_message + message_2)
+    return HTML(f"""
+        <p><span class="ansi-blue-fg">Correct!</span> You now have a score of <span class="ansi-blue-fg">{points} point{'s' if points != 1 else ''}!</span></p>
+        {extra_message}
+        <p>Well done! If you want to submit your score to the leaderboard, click <a href=#submission>HERE</a>.</p>
+    """)
 
 display(HTML("""
     <script>
