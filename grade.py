@@ -6,6 +6,7 @@ import textwrap
 from IPython.core.magic import register_cell_magic
 from IPython.display import display, HTML
 import pandas as pd
+from sklearn.metrics import accuracy_score
 
 
 def check_value(var, ans, show_ans=False):
@@ -122,17 +123,18 @@ def check_ml(model):
                'total intl calls', 'total eve calls', 'total day calls',
               'state', 'number vmail messages', 'international plan', 'voice mail plan',
               'customer service calls', 'account length']
-    df_test = pd.read_csv('data/Customer_telecom_testing.csv')
+    df_test = pd.read_csv('data/.Customer_telecom_testing.csv')
     X_test = df_test[features_to_use]
     y_test = df_test['churn']
     try:
-        acc = model.score(X_test, y_test)
+        y_pred = model.predict(X_test)
     except Exception:
         sys.stderr.write(colored('Error calling ', 'red') +
-                         colored('.score', 'green') +
+                         colored('.predict', 'green') +
                          colored(' on your model:\n', 'red'))
         raise
 
+    acc = accuracy_score(y_test, y_pred)
     if acc >=metric_th:
         print(f"Your model had an accuracy of {colored(f'{acc:0.2}', 'blue')} on the test set!\n")
         return True
