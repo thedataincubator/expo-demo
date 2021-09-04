@@ -154,15 +154,14 @@ def next_question(points, extra_message=""):
     return HTML(f"""
         <p><span class="ansi-blue-fg">Correct!</span> You now have a score of <span class="ansi-blue-fg">{points} point{'s' if points != 1 else ''}!</span></p>
         {extra_message}
-        <p>You can now move on to the <button onclick=advance()>next question</button>.</p>
-        <p>If you do not wish to continue and want to submit your score to the leaderboard, click <button onclick=leaderboardfunc()>HERE</button>.</p>
+        <p>You can now move on to the <button onclick=advance()>next question</button>, or submit your score to the <button onclick=leaderboardfunc()>leaderboard</button>.</p>
     """)
 
 def last_question(points, extra_message=""):
     return HTML(f"""
         <p><span class="ansi-blue-fg">Correct!</span> You now have a score of <span class="ansi-blue-fg">{points} point{'s' if points != 1 else ''}!</span></p>
         {extra_message}
-        <p>Well done! If you want to submit your score to the leaderboard, click <a href=#submission>HERE</a>.</p>
+        <p>Well done!  Be sure to submit your score to the <button onclick=leaderboardfunc()>leaderboard</button>.</p>
     """)
 
 display(HTML("""
@@ -202,11 +201,11 @@ def grade(line, cell):
         extra_message = ""
         if q=='digits' and sum(grades.values())>=7:
             extra_message = """
-        <p> Looks like you got all the questions right so far. If you haven't attended the foundational bootcamp already, you should consider it, looks like you're ready! </p>
+        <p>You've gotten all of the questions right so far!  You're ready to take the foundational bootcamp, if you haven't done so already.</p>
     """
         if q=='noise' and sum(grades.values())>=13:
             extra_message = """
-        <p> Looks like you got all the questions right so far. If you haven't attended the intermediate bootcamp already, you should consider it, looks like you're ready! </p>
+        <p>You've gotten all of the questions right so far!  You're ready to take the intermediate bootcamp, if you haven't done so already.</p>
     """
         if q=='churn':
             display(last_question(sum(grades.values()), extra_message))
