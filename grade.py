@@ -2,6 +2,7 @@ import base64
 import datetime
 import sys
 from termcolor import colored
+import textwrap
 from IPython.core.magic import register_cell_magic
 from IPython.display import display, HTML
 import pandas as pd
@@ -16,6 +17,9 @@ def check_value(var, ans, show_ans=False):
             sys.stderr.write('\n')
             sys.stderr.write('Make sure your variable is named correctly.')
             return False
+
+        if callable(ans):
+            return ans(val)
 
         if val == ans or (isinstance(val, float) and int(val) == ans):
             return True
@@ -74,39 +78,72 @@ def check_function(name, *test_cases):
         return True
     return func
 
-def check_exec(code, var, ans):
-    def func(ipy):
-        ipy.ex(code)
-        val = ipy.ev(var)
-        if val == ans:
-            return True
+def check_student(cls):
+    try:
+        stu = cls('Jim', 'Brown', ['math', 'sports'])
+    except Exception:
+        sys.stderr.write(colored('Error calling your class:\n', 'red'))
+        raise
+
+    try:
+        stu.change_last('Pitt')
+    except Exception:
+        sys.stderr.write(colored('Error calling ', 'red') +
+                         colored('Student.change_last', 'green') +
+                         colored(' on an instance:\n', 'red'))
+        raise
+    if stu.last != 'Pitt':
         sys.stderr.write(colored("That doesn't look correct.\n", 'red'))
         sys.stderr.write('\n')
-        sys.stderr.write('Fix your code and run the cell again.')
+        sys.stderr.write('The ' + colored('Student.change_last', 'green') +
+                         ' method did not work properly.')
         return False
-    
-    return func
 
-def check_ml(model, metric_th):
-    def func(ipy):
-        model_submitted = ipy.ev(model)
-        features_to_use = ['total intl minutes', 'total eve minutes', 'total day minutes',
-                   'total intl calls', 'total eve calls', 'total day calls',
-                  'state', 'number vmail messages', 'international plan', 'voice mail plan', 
-                  'customer service calls', 'account length']
-        df_test = pd.read_csv('data/Customer_telecom_testing.csv')
-        X_test = df_test[features_to_use]
-        y_test = df_test['churn']
-        acc = model_submitted.score(X_test, y_test)
-        print(acc)
-        if acc >=metric_th:
-            return True
-        sys.stderr.write(colored(f"The accuracy of your model on the test set is below {metric_th}.\n", 'red'))
+    try:
+        val = stu.num_topics()
+    except Exception:
+        sys.stderr.write(colored('Error calling ', 'red') +
+                         colored('Student.num_topics', 'green') +
+                         colored(' on an instance:\n', 'red'))
+        raise
+    if val != 2:
+        sys.stderr.write(colored("That doesn't look correct.\n", 'red'))
         sys.stderr.write('\n')
-        sys.stderr.write('Try to fix your code to train a better model.')
+        sys.stderr.write('The ' + colored('Student.num_topics', 'green') +
+                         ' method did not work properly.')
         return False
-    
-    return func
+
+    return True
+
+def check_ml(model):
+    metric_th = 0.85
+
+    features_to_use = ['total intl minutes', 'total eve minutes', 'total day minutes',
+               'total intl calls', 'total eve calls', 'total day calls',
+              'state', 'number vmail messages', 'international plan', 'voice mail plan',
+              'customer service calls', 'account length']
+    df_test = pd.read_csv('data/Customer_telecom_testing.csv')
+    X_test = df_test[features_to_use]
+    y_test = df_test['churn']
+    try:
+        acc = model.score(X_test, y_test)
+    except Exception:
+        sys.stderr.write(colored('Error calling ', 'red') +
+                         colored('.score', 'green') +
+                         colored(' on your model:\n', 'red'))
+        raise
+
+    if acc >=metric_th:
+        print(f"Your model had an accuracy of {colored(f'{acc:0.2}', 'blue')} on the test set!\n")
+        return True
+
+    sys.stderr.write(colored(f'Your model did not perform well enough.\n', 'red'))
+    sys.stderr.write('\n')
+    sys.stderr.write('It had an accuracy of ' + colored(f'{acc:0.2}', 'blue') +
+                     ' on a test set.\n')
+    sys.stderr.write('Improve your model to acheive an accuracy of ' +
+                     colored(str(metric_th), 'blue') +'.\n')
+    return False
 
 QUESTIONS = {
     'runcell': {
@@ -154,8 +191,19 @@ QUESTIONS = {
                                     ((3, []), 3))
     },
     'classes': {
-        'initialize': '',
-        'eval_func': check_exec('''stu = Student("Jim",  "Brown", ["math", "sports"]) \nstu.change_last("Pitt") \nval = stu.num_topics()''', 'val', 2)
+        'initialize': textwrap.dedent('''
+            class Person(object):
+                def __init__(self, first, last):
+                    self.first = first
+                    self.last = last
+
+                def full_name(self):
+                    return self.first + ' ' + self.last
+
+                def change_last(self, new_last):
+                    self.last = new_last
+        '''),
+        'eval_func': check_value('Student', check_student)
     },
     'most_common': {
         'initialize': '',
@@ -181,7 +229,7 @@ QUESTIONS = {
     },
     'churn': {
         'initialize': '',
-        'eval_func': check_ml('churn_model', 0.85)
+        'eval_func': check_value('churn_model', check_ml)
     }
 }
 
