@@ -59,7 +59,7 @@ def check_function(name, *test_cases):
                 sys.stderr.write(colored('Error calling your function.\n', 'red'))
                 sys.stderr.write('\n')
                 sys.stderr.write('When calling\n')
-                sys.stderr.write('        ' + colored(f'{name}({", ".join(map(repr, args))})', 'blue') + '\n')
+                sys.stderr.write('        ' + colored(f'{name}({", ".join(map(repr, args))})', 'green') + '\n')
                 sys.stderr.write('the following error was raised:\n')
                 raise
 
@@ -67,7 +67,7 @@ def check_function(name, *test_cases):
                 sys.stderr.write(colored("That doesn't look correct.\n", 'red'))
                 sys.stderr.write('\n')
                 sys.stderr.write('When calling\n')
-                sys.stderr.write('        ' + colored(f'{name}({", ".join(map(repr, args))})', 'blue') + '\n')
+                sys.stderr.write('        ' + colored(f'{name}({", ".join(map(repr, args))})', 'green') + '\n')
                 sys.stderr.write('an incorrect value was returned.\n')
                 return False
 
