@@ -4,4 +4,4 @@
 
 A Python quiz for a data science expo.
 
-_Copyright 2021 The Data Incubator.  All rights reserved._
+_Copyright 2021 Pragmatic Institute.  All rights reserved._
