@@ -28,7 +28,7 @@ def check_value(var, ans, show_ans=False):
         sys.stderr.write(colored("That doesn't look correct.\n", 'red'))
         sys.stderr.write('\n')
         if show_ans:
-            sys.stderr.write('We were expecting the the variable ' + colored(var, 'green') +
+            sys.stderr.write('We were expecting the variable ' + colored(var, 'green') +
                              ' to have the value\n')
             sys.stderr.write('        ' + colored(ans, 'blue') + '\n')
             sys.stderr.write('but it instead has the value\n')
