@@ -315,6 +315,7 @@ def get_grade_code():
            Your code is <tt>{code}</tt>.</p>
         <p>Submit these to the <a href="#">leaderboard</a>.</p>
     """))
+    return ''
 
 def parse_grade_code(code, n_questions):
     bits = f"{bin(int.from_bytes(base64.b64decode(code), 'big'))[2:]:0>48}"
