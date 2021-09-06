@@ -2,79 +2,150 @@ import base64
 import datetime
 import sys
 from termcolor import colored
+import textwrap
 from IPython.core.magic import register_cell_magic
 from IPython.display import display, HTML
 import pandas as pd
+from sklearn.metrics import accuracy_score
 
-def check_value(var, ans):
+
+def check_value(var, ans, show_ans=False):
     def func(ipy):
         try:
             val = ipy.ev(var)
         except NameError:
-            sys.stderr.write(f"Something went wrong. Perhaps you did not name your result {var} as the grader expects?")
-            return
+            sys.stderr.write('No variable named ' + colored(var, 'green') + ' found.\n')
+            sys.stderr.write('\n')
+            sys.stderr.write('Make sure your variable is named correctly.')
+            return False
 
-        if val == ans:
+        if callable(ans):
+            return ans(val)
+
+        if val == ans or (isinstance(val, float) and int(val) == ans):
             return True
+
         sys.stderr.write(colored("That doesn't look correct.\n", 'red'))
         sys.stderr.write('\n')
-        sys.stderr.write('We were expecting the the variable ' + colored(var, 'green') +
-                         ' to have the value\n')
-        sys.stderr.write('        ' + colored(ans, 'blue') + '\n')
-        sys.stderr.write('but it instead has the value\n')
-        sys.stderr.write('        ' + colored(val, 'blue') + '\n')
+        if show_ans:
+            sys.stderr.write('We were expecting the the variable ' + colored(var, 'green') +
+                             ' to have the value\n')
+            sys.stderr.write('        ' + colored(ans, 'blue') + '\n')
+            sys.stderr.write('but it instead has the value\n')
+            sys.stderr.write('        ' + colored(val, 'blue') + '\n')
+        else:
+            sys.stderr.write('The variable ' + colored(var, 'green') +
+                             ' has the value\n')
+            sys.stderr.write('        ' + colored(val, 'blue') + '\n')
+            sys.stderr.write('This is not what we expect.  Adjust your code and run the cell again.')
         return False
     
     return func
 
-def check_solution(var, ans):
+def check_function(name, *test_cases):
     def func(ipy):
-        val = ipy.ev(var)
-        if val == ans:
-            return True
-        if isinstance(val, float):
-            if int(val)==ans:
-                return True
+        try:
+            f = ipy.ev(name)
+        except NameError:
+            sys.stderr.write('No function named ' + colored(name, 'green') + ' found.\n')
+            sys.stderr.write('\n')
+            sys.stderr.write('Make sure your function is named correctly.\n')
+            return False
+        if not callable(f):
+            sys.stderr.write('The object named ' + colored(name, 'green') + ' is not a function.\n')
+            sys.stderr.write('\n')
+            sys.stderr.write('It is of type ' + colored(type(f), 'blue') + ', which is not callable.\n')
+            return False
+
+        for args, output in test_cases:
+            try:
+                val = f(*args)
+            except Exception:
+                sys.stderr.write(colored('Error calling your function.\n', 'red'))
+                sys.stderr.write('\n')
+                sys.stderr.write('When calling\n')
+                sys.stderr.write('        ' + colored(f'{name}({", ".join(map(repr, args))})', 'green') + '\n')
+                sys.stderr.write('the following error was raised:\n')
+                raise
+
+            if val != output:
+                sys.stderr.write(colored("That doesn't look correct.\n", 'red'))
+                sys.stderr.write('\n')
+                sys.stderr.write('When calling\n')
+                sys.stderr.write('        ' + colored(f'{name}({", ".join(map(repr, args))})', 'green') + '\n')
+                sys.stderr.write('an incorrect value was returned.\n')
+                return False
+
+        return True
+    return func
+
+def check_student(cls):
+    try:
+        stu = cls('Jim', 'Brown', ['math', 'sports'])
+    except Exception:
+        sys.stderr.write(colored('Error calling your class:\n', 'red'))
+        raise
+
+    try:
+        stu.change_last('Pitt')
+    except Exception:
+        sys.stderr.write(colored('Error calling ', 'red') +
+                         colored('Student.change_last', 'green') +
+                         colored(' on an instance:\n', 'red'))
+        raise
+    if stu.last != 'Pitt':
         sys.stderr.write(colored("That doesn't look correct.\n", 'red'))
         sys.stderr.write('\n')
-        sys.stderr.write('Fix your code and run the cell again.')
+        sys.stderr.write('The ' + colored('Student.change_last', 'green') +
+                         ' method did not work properly.')
         return False
-    
-    return func
 
-def check_function(code, var, ans):
-    def func(ipy):
-        ipy.ex(code)
-        val = ipy.ev(var)
-        if val == ans:
-            return True
+    try:
+        val = stu.num_topics()
+    except Exception:
+        sys.stderr.write(colored('Error calling ', 'red') +
+                         colored('Student.num_topics', 'green') +
+                         colored(' on an instance:\n', 'red'))
+        raise
+    if val != 2:
         sys.stderr.write(colored("That doesn't look correct.\n", 'red'))
         sys.stderr.write('\n')
-        sys.stderr.write('Fix your code and run the cell again.')
+        sys.stderr.write('The ' + colored('Student.num_topics', 'green') +
+                         ' method did not work properly.')
         return False
-    
-    return func
 
-def check_ml(model, metric_th):
-    def func(ipy):
-        model_submitted = ipy.ev(model)
-        features_to_use = ['total intl minutes', 'total eve minutes', 'total day minutes',
-                   'total intl calls', 'total eve calls', 'total day calls',
-                  'state', 'number vmail messages', 'international plan', 'voice mail plan', 
-                  'customer service calls', 'account length']
-        df_test = pd.read_csv('data/Customer_telecom_testing.csv')
-        X_test = df_test[features_to_use]
-        y_test = df_test['churn']
-        acc = model_submitted.score(X_test, y_test)
-        print(acc)
-        if acc >=metric_th:
-            return True
-        sys.stderr.write(colored(f"The accuracy of your model on the test set is below {metric_th}.\n", 'red'))
-        sys.stderr.write('\n')
-        sys.stderr.write('Try to fix your code to train a better model.')
-        return False
-    
-    return func
+    return True
+
+def check_ml(model):
+    metric_th = 0.85
+
+    features_to_use = ['total intl minutes', 'total eve minutes', 'total day minutes',
+               'total intl calls', 'total eve calls', 'total day calls',
+              'state', 'number vmail messages', 'international plan', 'voice mail plan',
+              'customer service calls', 'account length']
+    df_test = pd.read_csv('data/.Customer_telecom_testing.csv')
+    X_test = df_test[features_to_use]
+    y_test = df_test['churn']
+    try:
+        y_pred = model.predict(X_test)
+    except Exception:
+        sys.stderr.write(colored('Error calling ', 'red') +
+                         colored('.predict', 'green') +
+                         colored(' on your model:\n', 'red'))
+        raise
+
+    acc = accuracy_score(y_test, y_pred)
+    if acc >=metric_th:
+        print(f"Your model had an accuracy of {colored(f'{acc:0.2}', 'blue')} on the test set!\n")
+        return True
+
+    sys.stderr.write(colored(f'Your model did not perform well enough.\n', 'red'))
+    sys.stderr.write('\n')
+    sys.stderr.write('It had an accuracy of ' + colored(f'{acc:0.2}', 'blue') +
+                     ' on a test set.\n')
+    sys.stderr.write('Improve your model to acheive an accuracy of ' +
+                     colored(str(metric_th), 'blue') +'.\n')
+    return False
 
 QUESTIONS = {
     'runcell': {
@@ -82,60 +153,75 @@ QUESTIONS = {
     },
     'append': {
         'initialize': 'my_list = [1,2,3,4]',
-        'eval_func': check_value('my_list', [1,2,3,4,33])
+        'eval_func': check_value('my_list', [1,2,3,4,33], True)
     },
     'appendmult': {
         'initialize': 'my_list = [1,2,3,4,33,4,5]',
-        'eval_func': check_value('my_list', [1,2,3,4,33,4,5,66,99])
+        'eval_func': check_value('my_list', [1,2,3,4,33,4,5,66,99], True)
     },
     'appendfor': {
         'initialize': 'some_list = [2, 3, 5, 7, 11]',
-        'eval_func': check_value('squared',  [4, 9, 25, 49, 121])
+        'eval_func': check_value('squared',  [4, 9, 25, 49, 121], True)
     },
     'modulo': {
         'initialize': 'numbers_list = [4,2,7,35,6,99,6,2,5,87,3,21]',
-        'eval_func': check_solution('new_list', [7, 35, 5, 21])
+        'eval_func': check_value('new_list', [7, 35, 5, 21])
     },
     'cubes': {
         'initialize': '',
-        'eval_func': check_solution('cubes', {3: 27, 5: 125, 7: 343, 9: 729, 11: 1331, 13: 2197, 15: 3375, 17: 4913, 19: 6859})
+        'eval_func': check_value('cubes', {3: 27, 5: 125, 7: 343, 9: 729, 11: 1331, 13: 2197, 15: 3375, 17: 4913, 19: 6859})
     },
     'digits': {
         'initialize': '',
-        'eval_func': check_function('val = sum_digits(283701)', 'val',  21)
+        'eval_func': check_function('sum_digits',
+                                    ((283701,), 21),
+                                    ((0,), 0),
+                                    ((999999999,), 81))
     },
     'salaries': {
         'initialize': '''salaries_dict = {"ID2435": {"name": "Jim Benz", "salary": 100000}, 
                                           "ID9335": {"name": "Kim Pitt", "salary": 120000},
                                           "ID4535": {"name": "Jean Rolls", "salary": 80000},
                                           "ID4825": {"name": "Kathrine Frost", "salary": 160000}}''',
-        'eval_func': check_solution('max_salary_id', 'ID4825')
+        'eval_func': check_value('max_salary_id', 'ID4825')
     },
     'var_args': {
         'initialize': '',
-        'eval_func': check_function('''val = sum_numbers(2, 4, "hello", 1), \
-                                             sum_numbers(1, {'a':3}, 1), \
-                                             sum_numbers(3, [])''', 'val', (7, 2 ,3))
+        'eval_func': check_function('sum_numbers',
+                                    ((2, 4, 'hello', 1), 7),
+                                    ((1, {'a': 3}, 1), 2),
+                                    ((3, []), 3))
     },
     'classes': {
-        'initialize': '',
-        'eval_func': check_function('''stu = Student("Jim",  "Brown", ["math", "sports"]) \nstu.change_last("Pitt") \nval = stu.num_topics()''', 'val', 2)
+        'initialize': textwrap.dedent('''
+            class Person(object):
+                def __init__(self, first, last):
+                    self.first = first
+                    self.last = last
+
+                def full_name(self):
+                    return self.first + ' ' + self.last
+
+                def change_last(self, new_last):
+                    self.last = new_last
+        '''),
+        'eval_func': check_value('Student', check_student)
     },
     'most_common': {
         'initialize': '',
-        'eval_func': check_solution('num_most_common', 5772)
+        'eval_func': check_value('num_most_common', 5772)
     },
     'fewest': {
         'initialize': '',
-        'eval_func': check_solution('agency_fewest', 'DOHMH')
+        'eval_func': check_value('agency_fewest', 'DOHMH')
     },
     'noise': {
         'initialize': '',
-        'eval_func': check_solution('agency_noise', 'NYPD')
+        'eval_func': check_value('agency_noise', 'NYPD')
     },
     'books': {
         'initialize': '',
-        'eval_func': check_solution('avg_book_price', 35)
+        'eval_func': check_value('avg_book_price', 35)
     },
     'decorator': {
         'initialize': '',
@@ -143,7 +229,7 @@ QUESTIONS = {
     },
     'churn': {
         'initialize': '',
-        'eval_func': check_ml('churn_model', 0.85)
+        'eval_func': check_value('churn_model', check_ml)
     }
 }
 
@@ -195,8 +281,8 @@ def grade(line, cell):
         return
     
     ipy.ex(question['initialize'])
-    ipy.run_cell(cell)
-    if question['eval_func'](ipy):
+    result = ipy.run_cell(cell)
+    if result.success and question['eval_func'](ipy):
         grades[q] = True
         extra_message = ""
         if q=='digits' and sum(grades.values())>=7:
