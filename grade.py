@@ -313,7 +313,7 @@ def get_grade_code():
     display(HTML(f"""
         <p>Your final score is {sum(grades.values())}/16.<br />
            Your code is <tt>{code}</tt>.</p>
-        <p>Submit these to the <a href="#">leaderboard</a>.</p>
+        <p>Submit these to the <a href="https://forms.office.com/r/Bt5bNc3fSB">leaderboard</a>.</p>
     """))
     return ''
 
