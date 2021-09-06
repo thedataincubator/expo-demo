@@ -287,7 +287,7 @@ def grade(line, cell):
         extra_message = ""
         if q=='digits' and sum(grades.values())>=7:
             extra_message = """
-        <p>You've gotten all of the questions right so far!  You're ready to take the foundational bootcamp, if you haven't done so already.</p>
+        <p>You’re doing great! If you would be interested in going further with your python and data science related learning, contact the <a href="mailto:FSLDigitalDataDesign@bp.com">digital, data and design skill cluster</a>  about the Foundational data science bootcamp – click <a href="https://go.bp.com/3vJpI">here</a> for further information.</p>
     """
         if q=='noise' and sum(grades.values())>=13:
             extra_message = """
