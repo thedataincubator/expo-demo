@@ -224,10 +224,8 @@ QUESTIONS = {
         'eval_func': check_value('avg_book_price', 35)
     },
     'decorator': {
-        'initialize': 'def some_formula(a, b, c): return 3*a + b - 8*c',
-        'eval_func': check_function('ensure_noneg(some_formula)',
-                                    ((2, 3, 5), 0),
-                                    ((5, 3, 2), 2))
+        'initialize': '',
+        'eval_func': check_function('''@ensure_nonneg \ndef some_formula(a, b, c):\n\tresult = 3*a + b - 8*c\n\treturn result \nval=some_formula(2, 3, 5), some_formula(5, 3, 2)''', 'val', (0, 2))
     },
     'churn': {
         'initialize': '',
@@ -239,21 +237,18 @@ grades = {k: False for k in QUESTIONS}
 grades['runcell'] = True
 
 def next_question(points, extra_message=""):
-    message_1 = """
-        <p><span class="ansi-blue-fg">Correct!</span> You now have a score of <span class="ansi-blue-fg">%i point%s!</span></p>
-    """ % (points, 's' if points != 1 else '')
-#     message_2 = """<p>You can now move on to the <button onclick=advance()>next question</button>.</p>
-#     <p>If you do not wish to continue and want to submit your score to the leaderboard, click <a href=#submission>HERE</a>.</p>"""
-    message_2 = """<p>You can now move on to the <button onclick=advance()>next question</button>.</p>
-     <p>If you do not wish to continue and want to submit your score to the leaderboard, click <button onclick=leaderboardfunc()>HERE</button>.</p>"""
-    return HTML(message_1 + extra_message + message_2)
+    return HTML(f"""
+        <p><span class="ansi-blue-fg">Correct!</span> You now have a score of <span class="ansi-blue-fg">{points} point{'s' if points != 1 else ''}!</span></p>
+        {extra_message}
+        <p>You can now move on to the <button onclick=advance()>next question</button>, or submit your score to the <button onclick=leaderboardfunc()>leaderboard</button>.</p>
+    """)
 
 def last_question(points, extra_message=""):
-    message_1 = """
-        <p><span class="ansi-blue-fg">Correct!</span> You now have a score of <span class="ansi-blue-fg">%i point%s!</span></p>
-    """ % (points, 's' if points != 1 else '')
-    message_2 = """<p>Well done! If you want to submit your score to the leaderboard, click <a href=#submission>HERE</a>.</p>"""
-    return HTML(message_1 + extra_message + message_2)
+    return HTML(f"""
+        <p><span class="ansi-blue-fg">Correct!</span> You now have a score of <span class="ansi-blue-fg">{points} point{'s' if points != 1 else ''}!</span></p>
+        {extra_message}
+        <p>Well done!  Be sure to submit your score to the <button onclick=leaderboardfunc()>leaderboard</button>.</p>
+    """)
 
 display(HTML("""
     <script>
@@ -292,11 +287,11 @@ def grade(line, cell):
         extra_message = ""
         if q=='digits' and sum(grades.values())>=7:
             extra_message = """
-        <p> Looks like you got all the questions right so far. If you haven't attended the foundational bootcamp already, you should consider it, looks like you're ready! </p>
+        <p>You've gotten all of the questions right so far!  You're ready to take the foundational bootcamp, if you haven't done so already.</p>
     """
         if q=='noise' and sum(grades.values())>=13:
             extra_message = """
-        <p> Looks like you got all the questions right so far. If you haven't attended the intermediate bootcamp already, you should consider it, looks like you're ready! </p>
+        <p>You've gotten all of the questions right so far!  You're ready to take the intermediate bootcamp, if you haven't done so already.</p>
     """
         if q=='churn':
             display(last_question(sum(grades.values()), extra_message))
@@ -315,7 +310,11 @@ def get_grade_code():
     gb = grade_bits(grades.values(), 16)
     mixed = ''.join(i for t in zip(tb[:16], tb[16:], gb) for i in t)
     code = base64.b64encode(int(mixed, 2).to_bytes(6, 'big')).decode('ascii')
-    return f"Your code is: {code} \nYour final score is: {sum(grades.values())}"
+    display(HTML(f"""
+        <p>Your final score is {sum(grades.values())}/16.<br />
+           Your code is <tt>{code}</tt>.</p>
+        <p>Submit these to the <a href="#">leaderboard</a>.</p>
+    """))
 
 def parse_grade_code(code, n_questions):
     bits = f"{bin(int.from_bytes(base64.b64decode(code), 'big'))[2:]:0>48}"
