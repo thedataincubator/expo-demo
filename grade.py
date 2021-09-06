@@ -28,7 +28,7 @@ def check_value(var, ans, show_ans=False):
         sys.stderr.write(colored("That doesn't look correct.\n", 'red'))
         sys.stderr.write('\n')
         if show_ans:
-            sys.stderr.write('We were expecting the the variable ' + colored(var, 'green') +
+            sys.stderr.write('We were expecting the variable ' + colored(var, 'green') +
                              ' to have the value\n')
             sys.stderr.write('        ' + colored(ans, 'blue') + '\n')
             sys.stderr.write('but it instead has the value\n')
@@ -287,7 +287,7 @@ def grade(line, cell):
         extra_message = ""
         if q=='digits' and sum(grades.values())>=7:
             extra_message = """
-        <p>You've gotten all of the questions right so far!  You're ready to take the foundational bootcamp, if you haven't done so already.</p>
+        <p>You’re doing great! If you would be interested in going further with your python and data science related learning, contact the <a href="mailto:FSLDigitalDataDesign@bp.com">digital, data and design skill cluster</a>  about the Foundational data science bootcamp – click <a href="https://go.bp.com/3vJpI">here</a> for further information.</p>
     """
         if q=='noise' and sum(grades.values())>=13:
             extra_message = """
@@ -313,8 +313,9 @@ def get_grade_code():
     display(HTML(f"""
         <p>Your final score is {sum(grades.values())}/16.<br />
            Your code is <tt>{code}</tt>.</p>
-        <p>Submit these to the <a href="#">leaderboard</a>.</p>
+        <p>Submit these to the <a href="https://forms.office.com/r/Bt5bNc3fSB">leaderboard</a>.</p>
     """))
+    return ''
 
 def parse_grade_code(code, n_questions):
     bits = f"{bin(int.from_bytes(base64.b64decode(code), 'big'))[2:]:0>48}"
